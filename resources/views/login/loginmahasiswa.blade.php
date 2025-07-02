@@ -1,4 +1,5 @@
 <head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <style>
     * {
       margin: 0px;
@@ -35,7 +36,6 @@
       margin: 20px auto;
     }
 
-    /* Dropdown Sign Up */
     .dropdown {
       position: relative;
       display: inline-block;
@@ -120,6 +120,26 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 12px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    .success-message {
+      color: #2ecc71;
+      font-size: 12px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    .username-placeholder {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 
@@ -132,12 +152,12 @@
 
         <!-- Dropdown Login Role -->
         <div class="dropdown">
-          <button onclick="toggleDropdown()" class="dropdown-btn">Login </button>
+          <button onclick="toggleDropdown()" class="dropdown-btn">Pilih Role</button>
           <div id="dropdownMenu" class="dropdown-content">
-            <button class="admin" onclick="setRole('Admin')">Admin</button>
-            <button class="baak" onclick="setRole('BAAK')">BAAK</button>
-            <button class="dosen" onclick="setRole('Dosen')">Dosen</button>
-            <button class="mahasiswa" onclick="setRole('Mahasiswa')">Mahasiswa</button>
+            <button class="admin" onclick="setRole('admin')">Admin</button>
+            <button class="baak" onclick="setRole('baak')">BAAK</button>
+            <button class="dosen" onclick="setRole('dosen')">Dosen</button>
+            <button class="mahasiswa" onclick="setRole('mahasiswa')">Mahasiswa</button>
           </div>
         </div>
       </div>
@@ -146,10 +166,32 @@
     <!-- KANAN -->
     <div class="box-2">
       <div class="login-form-container">
-        <h1 id="loginTitle">Login Form</h1>
-        <input type="text" placeholder="Username" class="input-field"><br>
-        <input type="password" placeholder="Password" class="input-field"><br>
-        <button class="login-button" id="loginButton" type="button">Login</button>
+        <h1 id="loginTitle">Pilih Role Terlebih Dahulu</h1>
+        
+        @if($errors->any())
+          <div class="error-message">
+            @foreach($errors->all() as $error)
+              {{ $error }}<br>
+            @endforeach
+          </div>
+        @endif
+
+        @if(session('success'))
+          <div class="success-message">
+            {{ session('success') }}
+          </div>
+        @endif
+
+        <form action="{{ route('login.authenticate') }}" method="POST" id="loginForm">
+          @csrf
+          <div class="username-placeholder" id="usernamePlaceholder" style="display: none;">
+            <!-- Placeholder text akan diubah via JavaScript -->
+          </div>
+          <input type="text" name="username" placeholder="Username" class="input-field" id="usernameField" required><br>
+          <input type="password" name="password" placeholder="Password" class="input-field" required><br>
+          <input type="hidden" name="role" id="roleField" value="">
+          <button class="login-button" id="loginButton" type="submit" disabled>Pilih Role Dulu</button>
+        </form>
       </div>
     </div>
   </div>
@@ -163,32 +205,56 @@
       const container = document.getElementById("container");
       const button = document.getElementById("loginButton");
       const title = document.getElementById("loginTitle");
+      const roleField = document.getElementById("roleField");
+      const usernameField = document.getElementById("usernameField");
+      const usernamePlaceholder = document.getElementById("usernamePlaceholder");
 
-      // Ubah tampilan dan warna berdasarkan role
+      // Set role value
+      roleField.value = role;
+      
+      // Enable login button
+      button.disabled = false;
+
+      // Update placeholder dan instruksi berdasarkan role
       switch (role.toLowerCase()) {
         case 'admin':
           container.style.background = 'linear-gradient(to bottom, #e74c3c, #c0392b)';
           button.style.backgroundColor = '#e74c3c';
           title.innerText = "Login Admin";
+          usernameField.placeholder = "Email Admin";
+          usernamePlaceholder.innerText = "Gunakan email untuk login";
+          button.innerText = "Login Admin";
           break;
         case 'baak':
           container.style.background = 'linear-gradient(to bottom, #f39c12, #d35400)';
           button.style.backgroundColor = '#f39c12';
           title.innerText = "Login BAAK";
+          usernameField.placeholder = "Email BAAK";
+          usernamePlaceholder.innerText = "Gunakan email untuk login";
+          button.innerText = "Login BAAK";
           break;
         case 'dosen':
           container.style.background = 'linear-gradient(to bottom, #3498db, #2c3e50)';
           button.style.backgroundColor = '#3498db';
           title.innerText = "Login Dosen";
+          usernameField.placeholder = "NIM/NIDN Dosen";
+          usernamePlaceholder.innerText = "Gunakan NIM/NIDN untuk login";
+          button.innerText = "Login Dosen";
           break;
         case 'mahasiswa':
           container.style.background = 'linear-gradient(to bottom, #2ecc71, #27ae60)';
           button.style.backgroundColor = '#2ecc71';
           title.innerText = "Login Mahasiswa";
+          usernameField.placeholder = "NIM Mahasiswa";
+          usernamePlaceholder.innerText = "Gunakan NIM untuk login";
+          button.innerText = "Login Mahasiswa";
           break;
         default:
           break;
       }
+
+      // Show username placeholder
+      usernamePlaceholder.style.display = 'block';
 
       // Tutup dropdown
       document.getElementById("dropdownMenu").classList.remove("show");
