@@ -1,5 +1,6 @@
 <?php
 
+// routes/web.php
 use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\PengajuanController;
@@ -16,23 +17,32 @@ Route::get('/login/mahasiswa', [LoginMahasiswaController::class, 'index'])->name
 Route::post('/login/authenticate', [LoginMahasiswaController::class, 'authenticate'])->name('login.authenticate');
 Route::post('/logout', [LoginMahasiswaController::class, 'logout'])->name('logout');
 
-// Dashboard routes untuk setiap role
-Route::get('/mahasiswa/dashboard', function () {
-    return view('dashboard.mahasiswa');
-})->name('mahasiswa.dashboard');
+// Dashboard routes untuk setiap role dengan middleware
+Route::middleware(['role:mahasiswa'])->group(function () {
+    Route::get('/mahasiswa/dashboard', function () {
+        return view('dashboard.mahasiswa');
+    })->name('mahasiswa.dashboard');
+});
 
-Route::get('/dosen/dashboard', function () {
-    return view('dashboard.dosen');
-})->name('dosen.dashboard');
+Route::middleware(['role:dosen'])->group(function () {
+    Route::get('/dosen/dashboard', function () {
+        return view('dashboard.dosen');
+    })->name('dosen.dashboard');
+});
 
-Route::get('/admin/dashboard', function () {
-    return view('dashboard.admin');
-})->name('admin.dashboard');
+Route::middleware(['role:admin'])->group(function () {
+    Route::get('/admin/dashboard', function () {
+        return view('dashboard.admin');
+    })->name('admin.dashboard');
+});
 
-Route::get('/baak/dashboard', function () {
-    return view('dashboard.baak');
-})->name('baak.dashboard');
+Route::middleware(['role:baak'])->group(function () {
+    Route::get('/baak/dashboard', function () {
+        return view('dashboard.baak');
+    })->name('baak.dashboard');
+});
 
+// Default dashboard (untuk Laravel auth)
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
