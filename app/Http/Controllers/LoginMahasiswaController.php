@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\LoginMahasiswa;
@@ -33,13 +34,16 @@ class LoginMahasiswaController extends Controller
 
         // Coba login dengan Laravel Auth terlebih dahulu (untuk admin dan baak)
         if (in_array($role, ['admin', 'baak'])) {
-            if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']]) ||
-                Auth::attempt(['email' => $credentials['username'], 'password' => $credentials['password']])) {
-                
-                $user = Auth::user();
-                
-                // Cek apakah role sesuai
-                if ($user->role === $role) {
+            // Cari user berdasarkan username atau email
+            $user = User::where('username', $credentials['username'])
+                       ->orWhere('email', $credentials['username'])
+                       ->first();
+            
+            if ($user && $user->role === $role) {
+                // Cek password dengan Hash::check untuk menangani berbagai format hash
+                if (Hash::check($credentials['password'], $user->password)) {
+                    // Login manual menggunakan Auth::login
+                    Auth::login($user);
                     $request->session()->regenerate();
                     
                     // Set session data
@@ -47,13 +51,9 @@ class LoginMahasiswaController extends Controller
                     Session::put('user_name', $user->name);
                     Session::put('user_role', $user->role);
                     Session::put('user_email', $user->email);
+                    Session::put('user_username', $user->username);
                     
                     return $this->redirectByRole($user->role, $user->name);
-                } else {
-                    Auth::logout();
-                    return back()->withErrors([
-                        'role' => 'Role yang dipilih tidak sesuai dengan akun Anda.',
-                    ])->withInput($request->only('username'));
                 }
             }
         }
@@ -64,7 +64,7 @@ class LoginMahasiswaController extends Controller
                 ->orWhere('email', $credentials['username'])
                 ->first();
 
-            if ($mahasiswa && password_verify($credentials['password'], $mahasiswa->password)) {
+            if ($mahasiswa && Hash::check($credentials['password'], $mahasiswa->password)) {
                 $request->session()->regenerate();
                 
                 // Set session data
@@ -85,7 +85,7 @@ class LoginMahasiswaController extends Controller
                 ->orWhere('email', $credentials['username'])
                 ->first();
 
-            if ($dosen && password_verify($credentials['password'], $dosen->password)) {
+            if ($dosen && Hash::check($credentials['password'], $dosen->password)) {
                 $request->session()->regenerate();
                 
                 // Set session data
@@ -121,8 +121,8 @@ class LoginMahasiswaController extends Controller
                 return redirect()->route('mahasiswa.dashboard')
                     ->with('success', 'Selamat datang, ' . $name);
             default:
-                return redirect()->route('dashboard')
-                    ->with('success', 'Selamat datang, ' . $name);
+                return redirect()->route('login.mahasiswa')
+                    ->with('error', 'Role tidak dikenali');
         }
     }
 

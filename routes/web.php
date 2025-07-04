@@ -3,6 +3,8 @@
 use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\PengajuanController;
+use App\Http\Controllers\JurusanController;
+use App\Http\Controllers\ProdiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LoginMahasiswaController;
 use App\Http\Middleware\RoleMiddleware;
@@ -15,7 +17,7 @@ Route::get('/', function () {
 // Login routes
 Route::get('/login', [LoginMahasiswaController::class, 'index'])->name('login.mahasiswa');
 Route::get('/login/mahasiswa', [LoginMahasiswaController::class, 'index'])->name('login.mahasiswa');
-Route::post('/login/authenticate', [LoginMahasiswaController::class, 'authenticate'])->name('login.authenticate');
+Route::post('/login/authenticate', [LoginMahasiswaController::class, 'authenticate'])->name(name: 'login.authenticate');
 Route::post('/logout', [LoginMahasiswaController::class, 'logout'])->name('logout');
 
 // Dashboard routes dengan middleware role
